@@ -4,16 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento de Jogadores</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'dark' || (!theme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
         .card-shadow { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-hover:hover { transform: translateY(-1px); transition: all 0.2s ease; }
         .player-row:hover { background-color: #f8fafc; transition: all 0.2s ease; }
+        .dark .player-row:hover { background-color: #1f2937; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors">
 
     <!-- Navbar -->
     {% include 'players/navbar.html' %}
@@ -54,45 +67,45 @@
         {% endif %}
 
         <!-- Lista Principal -->
-        <div class="bg-white rounded-lg card-shadow mb-8 overflow-hidden">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                    <i class="fas fa-users text-gray-600"></i> Lista Principal ({{ qtd_main }}/{{ main_players_limit }}){% if not hide_racha_value %} | R$ {{ value_racha }} por pessoa{% endif %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg card-shadow mb-8 overflow-hidden transition-colors">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <i class="fas fa-users text-gray-600 dark:text-gray-300"></i> Lista Principal ({{ qtd_main }}/{{ main_players_limit }}){% if not hide_racha_value %} | R$ {{ value_racha }} por pessoa{% endif %}
                 </h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
+                    <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                         <tr>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Nome</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Média de Votos</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nome</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Média de Votos</th>
                             {% if user.is_superuser %}
-                            <th class="px-6 py-3 text-center text-sm font-medium text-gray-700">Ações</th>
+                            <th class="px-6 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Ações</th>
                             {% endif %}
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         {% for player in main_players %}
                         <tr class="player-row">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-gray-900 font-medium">{{ player.name }}</span>
+                                <span class="text-gray-900 dark:text-gray-100 font-medium">{{ player.name }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if show_scores %}
-                                    <span class="text-gray-900 font-semibold">{{ player.average_score|floatformat:2 }}</span>
+                                    <span class="text-gray-900 dark:text-gray-100 font-semibold">{{ player.average_score|floatformat:2 }}</span>
                                 {% else %}
-                                    <span class="text-gray-400 italic">Liberado após o encerramento da votação</span>
+                                    <span class="text-gray-400 dark:text-gray-500 italic">Liberado após o encerramento da votação</span>
                                 {% endif %}
                             </td>
                             {% if user.is_superuser %}
                             <td class="px-6 py-4 text-center">
                                 <a href="{% url 'admin_remove_player' player.id %}" 
-                                   class="text-red-600 hover:text-red-800 font-bold">X</a>
+                                   class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-bold">X</a>
                             </td>
                             {% endif %}
                         </tr>
                         {% empty %}
-                        <tr><td colspan="{% if user.is_superuser %}3{% else %}2{% endif %}" class="px-6 py-4 text-center text-gray-500">Nenhum jogador ainda.</td></tr>
+                        <tr><td colspan="{% if user.is_superuser %}3{% else %}2{% endif %}" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Nenhum jogador ainda.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -100,37 +113,37 @@
         </div>
 
         <!-- Fila de Espera -->
-        <div class="bg-white rounded-lg card-shadow overflow-hidden">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                    <i class="fas fa-clock text-gray-600"></i> Fila de Espera
+        <div class="bg-white dark:bg-gray-800 rounded-lg card-shadow overflow-hidden transition-colors">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <i class="fas fa-clock text-gray-600 dark:text-gray-300"></i> Fila de Espera
                 </h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
+                    <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                         <tr>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Posição</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Nome</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Posição</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nome</th>
                             {% if user.is_superuser %}
-                            <th class="px-6 py-3 text-center text-sm font-medium text-gray-700">Ações</th>
+                            <th class="px-6 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Ações</th>
                             {% endif %}
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         {% for player in waiting_players %}
                         <tr class="player-row">
-                            <td class="px-6 py-4 whitespace-nowrap">{{ player.queue_position }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ player.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ player.queue_position }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ player.name }}</td>
                             {% if user.is_superuser %}
                             <td class="px-6 py-4 text-center">
                                 <a href="{% url 'admin_remove_player' player.id %}" 
-                                   class="text-red-600 hover:text-red-800 font-bold">X</a>
+                                   class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-bold">X</a>
                             </td>
                             {% endif %}
                         </tr>
                         {% empty %}
-                        <tr><td colspan="{% if user.is_superuser %}3{% else %}2{% endif %}" class="px-6 py-4 text-center text-gray-500">Ninguém na fila de espera.</td></tr>
+                        <tr><td colspan="{% if user.is_superuser %}3{% else %}2{% endif %}" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Ninguém na fila de espera.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
