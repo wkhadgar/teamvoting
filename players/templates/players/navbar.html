@@ -22,6 +22,11 @@
         <a href="{% url 'teams' %}" class="btn-hover bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2">
             <i class="fas fa-users"></i> Ver Times
         </a>
+        {% if user.is_superuser %}
+            <button type="button" onclick="abrirModalConfiguracoes()" class="btn-hover bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2">
+                <i class="fas fa-cog"></i> Configurações
+            </button>
+        {% endif %}
         {% if user.is_authenticated %}
             <form action="{% url 'logout' %}" method="post" style="display:inline;">
                 {% csrf_token %}
@@ -36,3 +41,104 @@
         {% endif %}
     </div>
 </nav>
+
+{% if user.is_superuser %}
+<!-- Modal de Configurações (segue o padrão visual dos cards do projeto: bg-white, rounded-xl, shadow, Tailwind) -->
+<div id="modalConfiguracoes" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] px-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+        <button type="button" onclick="fecharModalConfiguracoes()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+
+        <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <i class="fas fa-cog text-purple-600"></i> Configurações do Sistema
+        </h2>
+
+        <form method="post" action="{% url 'admin_update_settings' %}" class="flex flex-col gap-5">
+            {% csrf_token %}
+
+            <div>
+                <label for="players_per_team" class="block text-sm font-medium text-gray-700 mb-1">
+                    Jogadores por time
+                </label>
+                <input type="number" name="players_per_team" id="players_per_team" min="1" step="1"
+                       value="{{ game_config.players_per_team }}"
+                       class="border border-gray-300 rounded px-3 py-2 w-full" required>
+            </div>
+
+            <div>
+                <label for="main_players_limit" class="block text-sm font-medium text-gray-700 mb-1">
+                    Quantidade máxima da lista principal
+                </label>
+                <input type="number" name="main_players_limit" id="main_players_limit" min="1" step="1"
+                       value="{{ game_config.main_players_limit }}"
+                       class="border border-gray-300 rounded px-3 py-2 w-full" required>
+            </div>
+
+            <div>
+                <label for="racha_value" class="block text-sm font-medium text-gray-700 mb-1">
+                    Valor total do racha (R$)
+                </label>
+                <input type="number" name="racha_value" id="racha_value" min="0.01" step="0.01"
+                       value="{{ game_config.racha_value }}"
+                       class="border border-gray-300 rounded px-3 py-2 w-full" required>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="hide_racha_value" id="hide_racha_value"
+                       {% if game_config.hide_racha_value %}checked{% endif %}
+                       class="h-4 w-4 border-gray-300 rounded">
+                <label for="hide_racha_value" class="text-sm font-medium text-gray-700">
+                    Ocultar valor do racha para usuários comuns
+                </label>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+                <h3 class="text-sm font-semibold text-gray-800 mb-3">Janela de votação</h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label for="vote_day" class="block text-sm font-medium text-gray-700 mb-1">Dia</label>
+                        <select name="vote_day" id="vote_day" class="border border-gray-300 rounded px-3 py-2 w-full">
+                            {% for value, label in game_config.VOTE_DAY_CHOICES %}
+                                <option value="{{ value }}" {% if game_config.vote_day == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vote_start_time" class="block text-sm font-medium text-gray-700 mb-1">Início</label>
+                        <input type="time" name="vote_start_time" id="vote_start_time"
+                               value="{{ game_config.vote_start_time|time:'H:i' }}"
+                               class="border border-gray-300 rounded px-3 py-2 w-full" required>
+                    </div>
+                    <div>
+                        <label for="vote_end_time" class="block text-sm font-medium text-gray-700 mb-1">Encerramento</label>
+                        <input type="time" name="vote_end_time" id="vote_end_time"
+                               value="{{ game_config.vote_end_time|time:'H:i' }}"
+                               class="border border-gray-300 rounded px-3 py-2 w-full" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-2">
+                <button type="button" onclick="fecharModalConfiguracoes()"
+                        class="px-4 py-2 rounded text-gray-600 hover:text-gray-900 transition">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-hover bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded flex items-center gap-2">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function abrirModalConfiguracoes() {
+        document.getElementById('modalConfiguracoes').classList.remove('hidden');
+    }
+    function fecharModalConfiguracoes() {
+        document.getElementById('modalConfiguracoes').classList.add('hidden');
+    }
+</script>
+{% endif %}

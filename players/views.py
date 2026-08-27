@@ -1,13 +1,16 @@
+import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import redirect, render, get_object_or_404
-from django.contrib import messages
-from .models import Player, Vote, GameConfig
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.shortcuts import redirect, render, get_object_or_404
+
 from .decorators import only_tuesday_evening, vote_open_only
-import datetime
-import pytz
+from .models import GameConfig, Player, Vote
+from .utils import are_teams_available
 
 ERROR_TRANSLATIONS = {
     "A user with that username already exists.": "Já existe um usuário com esse nome.",
@@ -15,12 +18,6 @@ ERROR_TRANSLATIONS = {
     "The two password fields didn’t match.": "As senhas não coincidem.",
     "This field is required.": "Este campo é obrigatório.",
 }
-
-
-def is_after_tuesday_20h():
-    tz = pytz.timezone("America/Sao_Paulo")
-    now = datetime.datetime.now(tz)
-    return now.weekday() == 1 and now.hour >= 20
 
 
 def get_main_players_limit():
@@ -71,9 +68,10 @@ def home(request):
     main_players = Player.objects.filter(is_main=True).order_by('id')
     waiting_players = Player.objects.filter(is_main=False).order_by('queue_position')
     is_main_player = main_players.filter(name=request.user.username).exists() if request.user.is_authenticated else False
-    show_scores = is_after_tuesday_20h()
+    show_scores = are_teams_available()
     show_leave = False
     value_racha = racha_total
+    hide_racha_value = config.hide_racha_value
 
     if request.user.is_authenticated:
         show_leave = Player.objects.filter(name=request.user.username).exists()
@@ -94,6 +92,7 @@ def home(request):
         'racha_total': racha_total,
         'racha_total_input': str(racha_total),
         'main_players_limit': main_players_limit,
+        'hide_racha_value': hide_racha_value,
     })
 
 
@@ -167,7 +166,7 @@ def vote(request):
 def teams(request):
     players = list(Player.objects.filter(is_main=True))
     players = sorted(players, key=lambda p: p.average_score(), reverse=True)
-    max_team_size = 5
+    max_team_size = GameConfig.load().players_per_team
     num_teams = (len(players) + max_team_size - 1) // max_team_size
     teams = [[] for _ in range(num_teams)]
     team_scores = [0] * num_teams
@@ -246,33 +245,61 @@ def admin_remove_player(request, player_id):
 
 
 @user_passes_test(lambda u: u.is_superuser)
-def admin_update_main_limit(request):
+def admin_update_settings(request):
     if request.method == 'POST':
         config = GameConfig.load()
 
-        limit = request.POST.get('main_players_limit')
-        racha_value = request.POST.get('racha_value', '').replace(',', '.')
-
-        if limit in ['15', '20']:
-            config.main_players_limit = int(limit)
-        else:
-            messages.error(request, 'Opção inválida para limite da lista principal.')
+        try:
+            players_per_team = int(request.POST.get('players_per_team', ''))
+        except (TypeError, ValueError):
+            messages.error(request, 'Quantidade de jogadores por time inválida.')
             return redirect('/')
 
         try:
-            parsed_racha_value = Decimal(racha_value)
+            main_players_limit = int(request.POST.get('main_players_limit', ''))
+        except (TypeError, ValueError):
+            messages.error(request, 'Quantidade máxima da lista principal inválida.')
+            return redirect('/')
 
-            if parsed_racha_value <= 0:
-                messages.error(request, 'O valor do racha precisa ser maior que zero.')
-                return redirect('/')
+        racha_value_raw = request.POST.get('racha_value', '').replace(',', '.')
 
-            config.racha_value = parsed_racha_value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            config.save()
-            rebalance_players()
-            messages.success(request, 'Configurações atualizadas com sucesso.')
-
+        try:
+            parsed_racha_value = Decimal(racha_value_raw).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         except InvalidOperation:
             messages.error(request, 'Valor do racha inválido.')
+            return redirect('/')
+
+        hide_racha_value = request.POST.get('hide_racha_value') == 'on'
+
+        vote_day = request.POST.get('vote_day')
+        vote_start_time = request.POST.get('vote_start_time')
+        vote_end_time = request.POST.get('vote_end_time')
+
+        try:
+            parsed_start_time = datetime.datetime.strptime(vote_start_time, '%H:%M').time()
+            parsed_end_time = datetime.datetime.strptime(vote_end_time, '%H:%M').time()
+        except (TypeError, ValueError):
+            messages.error(request, 'Horário de início/encerramento da votação inválido.')
+            return redirect('/')
+
+        config.players_per_team = players_per_team
+        config.main_players_limit = main_players_limit
+        config.racha_value = parsed_racha_value
+        config.hide_racha_value = hide_racha_value
+        config.vote_day = vote_day
+        config.vote_start_time = parsed_start_time
+        config.vote_end_time = parsed_end_time
+
+        try:
+            config.save()
+        except ValidationError as exc:
+            for field_errors in exc.message_dict.values():
+                for error in field_errors:
+                    messages.error(request, error)
+            return redirect('/')
+
+        rebalance_players()
+        messages.success(request, 'Configurações atualizadas com sucesso.')
 
     return redirect('/')
 
