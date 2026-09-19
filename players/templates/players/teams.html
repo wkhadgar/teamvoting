@@ -3,10 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>Times Formados</title>
+  <script>
+      (function () {
+          var theme = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (theme === 'dark' || (!theme && prefersDark)) {
+              document.documentElement.classList.add('dark');
+          }
+      })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      tailwind.config = { darkMode: 'class' };
+  </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col transition-colors">
 
   <!-- Navbar -->
   {% include 'players/navbar.html' %}
@@ -14,23 +26,23 @@
   <!-- Conteúdo centralizado abaixo da navbar -->
   <div class="flex-grow flex flex-col items-center pt-20 px-4 gap-6">
 
-    <h1 class="text-3xl font-bold text-gray-800 mb-4">Times Formados</h1>
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">Times Formados</h1>
 
     {% for team in teams %}
-      <div class="bg-white rounded-xl shadow-md w-full max-w-md p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b border-gray-200 pb-2">Time {{ forloop.counter }}</h2>
-        <ul class="divide-y divide-gray-200">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md w-full max-w-md p-6 transition-colors">
+        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Time {{ forloop.counter }}</h2>
+        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
           {% for player in team %}
-            <li class="flex justify-between py-2 text-gray-800">
+            <li class="flex justify-between py-2 text-gray-800 dark:text-gray-200">
               <span>{{ player.name }}</span>
-              <span class="font-medium text-gray-600">Média: {{ player.average_score|floatformat:2 }}</span>
+              <span class="font-medium text-gray-600 dark:text-gray-400">Média: {{ player.average_score|floatformat:2 }}</span>
             </li>
           {% endfor %}
         </ul>
       </div>
     {% endfor %}
 
-    <a href="{% url 'home' %}" class="mt-6 text-center text-gray-600 hover:text-gray-900 transition">
+    <a href="{% url 'home' %}" class="mt-6 text-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition">
       <i class="fas fa-arrow-left"></i> Voltar
     </a>
 

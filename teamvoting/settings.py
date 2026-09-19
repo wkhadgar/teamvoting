@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-eowv%u^vqs7^9zly5z#5yc&_9n!e5)$u925c+^uzug3zuazt!g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["iPNX007.pythonanywhere.com"]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -63,6 +63,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'players.context_processors.game_config',
             ],
         },
     },

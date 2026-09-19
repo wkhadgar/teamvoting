@@ -4,27 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <title>Votação</title>
+  <script>
+      (function () {
+          var theme = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (theme === 'dark' || (!theme && prefersDark)) {
+              document.documentElement.classList.add('dark');
+          }
+      })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      tailwind.config = { darkMode: 'class' };
+  </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col transition-colors">
 
   <!-- Navbar no topo -->
   {% include 'players/navbar.html' %}
 
   <!-- Conteúdo centralizado abaixo da navbar -->
   <div class="flex-grow flex justify-center pt-20 px-4">
-    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-      <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Votação</h1>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-md transition-colors">
+      <h1 class="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-gray-100">Votação</h1>
       
       <form method="post" class="flex flex-col">
         {% csrf_token %}
         {% for player in players %}
-          <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-            <label class="font-medium text-gray-700">{{ player.name }}</label>
+          <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+            <label class="font-medium text-gray-700 dark:text-gray-300">{{ player.name }}</label>
             <input type="number" name="score_{{ player.id }}" min="1" max="10" 
                    value="{{ votes_dict|get_item:player.id|default:'' }}" 
-                   class="w-16 text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" required>
+                   class="w-16 text-center border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none" required>
           </div>
         {% endfor %}
         
@@ -33,7 +45,7 @@
         </button>
       </form>
 
-      <a href="{% url 'home' %}" class="block text-center mt-4 text-gray-600 hover:text-gray-900 transition">
+      <a href="{% url 'home' %}" class="block text-center mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition">
         Voltar
       </a>
     </div>
